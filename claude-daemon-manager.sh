@@ -131,6 +131,7 @@ start_daemon() {
     fi
     
     print_status "Starting Claude auto-renewal daemon..."
+    touch "$HOME/.claude-auto-renew-renew-on-start"
     nohup "$DAEMON_SCRIPT" > /dev/null 2>&1 &
     
     sleep 2
