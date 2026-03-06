@@ -260,9 +260,9 @@ start_claude_session() {
         [ -n "$line" ] && log_message "  claude: $line"
     done <<< "$output"
 
-    # Detect weekly usage limit
+    # Detect usage limit (daily or weekly — same message format from Claude)
     if echo "$output" | grep -qi "hit your limit"; then
-        log_message "⚠️  Weekly usage limit hit"
+        log_message "⚠️  Usage limit hit"
         if parse_limit_reset_epoch "$output"; then
             local reset_display
             reset_display=$(date -d "@$LIMIT_RESET_EPOCH" '+%Y-%m-%d %H:%M' 2>/dev/null)
@@ -386,7 +386,7 @@ main() {
         if [ -n "$stored_reset" ] && [ "$stored_reset" -gt "$now" ]; then
             local reset_display
             reset_display=$(date -d "@$stored_reset" '+%Y-%m-%d %H:%M' 2>/dev/null)
-            log_message "⚠️  Stored weekly limit reset found — renewal blocked until $reset_display"
+            log_message "⚠️  Stored usage limit reset found — renewal blocked until $reset_display"
             LIMIT_RESET_EPOCH="$stored_reset"
         else
             rm -f "$LIMIT_RESET_FILE"
@@ -533,7 +533,7 @@ main() {
             local wait_seconds=$(( LIMIT_RESET_EPOCH - now ))
             local reset_display
             reset_display=$(date -d "@$LIMIT_RESET_EPOCH" '+%Y-%m-%d %H:%M' 2>/dev/null)
-            log_message "⚠️  Weekly limit active — sleeping until $reset_display (${wait_seconds}s)..."
+            log_message "⚠️  Usage limit active — sleeping until $reset_display (${wait_seconds}s)..."
             sleep "$wait_seconds" &
             SLEEP_PID=$!
             wait "$SLEEP_PID" 2>/dev/null
@@ -603,11 +603,11 @@ main() {
                 log_message "⚠️  Session may still be active - check manually with 'ccusage blocks'"
             fi
         elif [ $session_ret -eq 2 ]; then
-            # Weekly limit hit — LIMIT_RESET_EPOCH and LIMIT_RESET_FILE already set in start_claude_session
+            # Usage limit hit — LIMIT_RESET_EPOCH and LIMIT_RESET_FILE already set in start_claude_session
             local wait_seconds=$(( LIMIT_RESET_EPOCH - $(date +%s) ))
             local reset_display
             reset_display=$(date -d "@$LIMIT_RESET_EPOCH" '+%Y-%m-%d %H:%M' 2>/dev/null)
-            log_message "⚠️  Weekly limit hit — sleeping until $reset_display (${wait_seconds}s)..."
+            log_message "   Sleeping until $reset_display (${wait_seconds}s)..."
             sleep "$wait_seconds" &
             SLEEP_PID=$!
             wait "$SLEEP_PID" 2>/dev/null
